@@ -1,11 +1,9 @@
 # Alan Perez
-# STA 4350
-# 05/11/2022
-# PROJECT CODE
+
 
 # Clear environment and set working directory
 rm(list=ls())
-setwd("C:/Users/perez/OneDrive/Desktop/STA 4350/Project")
+setwd("C:/Users/ajper/Desktop/STA 4350/Final Submission")
 
 
 # Load in data
@@ -317,7 +315,7 @@ svm_auc
 
 calc_loss <- function(y, yhat, costs) {
   # Look at all combinations of actual and predicted values
-  combinations <- matrix(rep(0, times=4), ncol=2, byrow=TRUE)
+  combinations <- matrix(rep(0, times=4), ncol=2, byrow=TRUE) # Create empty table
   colnames(combinations) <- c(0, 1) # yhat 
   rownames(combinations) <- c(0, 1) # fraud
   combinations <- as.table(combinations)
@@ -328,11 +326,6 @@ calc_loss <- function(y, yhat, costs) {
   combinations[2, 1] <- sum(fraud[fraud==1] - yhat[fraud==1]) # y = 1, but yhat = 0
   combinations[1, 2] <- sum(yhat[fraud==0] - fraud[fraud==0]) # y = 0, but yhat = 1
   
-  # print(combinations)
-  
-  # print(table(y, yhat))
-  # combinations <- table(y, yhat)
-  
   # If Y = 0 (not fraudulent), but Y_hat = 1 => loss = $25 (false positive)
   # If Y = 1 (fraud), but Y_hat = 0 => loss = $430.33      (false negatives)
   return(combinations[1, 2]*25 + combinations[2, 1]*costs)
@@ -340,7 +333,20 @@ calc_loss <- function(y, yhat, costs) {
 }
 
 # CASE 1: Company will pay sample mean transaction of $430.33
-# Set tau to 0.2
+# First we find the optimal tau value
+taus <- seq(0, 1, 0.01)
+costs <- numeric(length(taus))
+for (i in 1 : length(taus)) {
+  yhat <- as.numeric(pi_hat_gam > taus[i])
+  
+  cost <- calc_loss(fraud, yhat, 430.33) / 1000
+  costs[i] <- cost
+}
+
+
+plot(taus, costs, pch=20, ylab="Cost per Customer")
+
+# Set tau to 0
 tau <- 0
 
 # Find the y_hat values using the new tau
@@ -357,44 +363,7 @@ result / 1000
 #
 
 # CASE 2: Cost varies from customer to customer
-tau <- 0
-
-yhat <- as.numeric(pi_hat_gam > tau)
-
-total <- 0
-
-for (i in 1 : length(amount)){
-  # If we predict not fraudulent but is in fact fraudulent
-  if ((yhat[i] == 0) && (fraud[i] == 1)) {
-    total <- total + amount[i]
-  }
-  # If we predict fraudulent but is not fraudulent
-  else if ((yhat[i] == 1) && (fraud[i] == 0)) {
-    total <- total + 25
-  }
-  
-}
-
-total/1000
-
-
-
-# Case 3: For funsies
-taus <- seq(0, 1, 0.01)
-costs <- numeric(length(taus))
-for (i in 1 : length(taus)) {
-  yhat <- as.numeric(pi_hat_gam > taus[i])
-  
-  cost <- calc_loss(fraud, yhat, 430.33) / 1000
-  costs[i] <- cost
-}
-# costs
-
-plot(taus, costs, pch=20, ylab="Cost per Customer")
-
-
-
-# Case 4: FOr funsies
+# First find optimal tau value
 taus <- seq(0, 1, 0.01)
 costs <- numeric(length(taus))
 for (i in 1 : length(taus)) {
@@ -412,12 +381,30 @@ for (i in 1 : length(taus)) {
     else if ((yhat[j] == 1) && (fraud[j] == 0)) {
       costs[i] <- costs[i] + 25
     }
-    
+  }
+}
+
+plot(taus, costs/1000, pch=20, ylab="Cost per Customer")
+
+# Set tau to 0
+tau <- 0
+
+yhat <- as.numeric(pi_hat_gam > tau)
+total <- 0
+
+for (i in 1 : length(amount)){
+  # If we predict not fraudulent but is in fact fraudulent
+  if ((yhat[i] == 0) && (fraud[i] == 1)) {
+    total <- total + amount[i]
+  }
+  # If we predict fraudulent but is not fraudulent
+  else if ((yhat[i] == 1) && (fraud[i] == 0)) {
+    total <- total + 25
   }
   
 }
 
-plot(taus, costs/1000, pch=20, ylab="Cost per Customer")
+total/1000
 
 
 # ----- CODE SNIPPET-----
